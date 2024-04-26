@@ -1,0 +1,34 @@
+Not using distributed mode
+Namespace(aspect_ratio_group_factor=3, batch_size=4, data_path='/dataheart/yuhanl.used/coco/', dataset='coco', device='cuda', dist_url='env://', distributed=False, epochs=26, extra_input='data/split5.csv', iou_th=0.3, lr=0.001, lr_gamma=0.1, lr_step_size=8, lr_steps=[16, 22], model='fasterrcnn_mobilenet_v3_large_fpn', momentum=0.9, our_loss='False', output_dir='checkpoints', pretrained=True, print_freq=20, resume='ckpt/baseline_vehicle/model_5_2000.pth', split='test', start_epoch=0, test_only=False, th=0.45, weight_decay=0.0001, wl_path='wl_mapping5.csv', wl_path_test='wl_mapping4.csv', workers=4, world_size=1)
+Loading data
+loading annotations into memory...
+Done (t=3.77s)
+creating index...
+index created!
+Creating data loaders
+Creating model
+LOading weights!!!!!!!
+Resume training
+Start testing
+lenght of data:  2460
+F1:  0.6178010471204188
+Accuracy -0.4208705127072474
+F1:  0.5747126436781609
+Accuracy -0.7371135598408327
+F1:  0.5623931623931624
+Accuracy -0.9487687927285242
+F1:  0.55
+Accuracy -1.2426378200247548
+F1:  0.5659163987138263
+Accuracy -1.1468748230796422
+F1:  0.5745983167559297
+Accuracy -1.0818153848342196
+F1:  0.5758059368017874
+Accuracy -1.0079299769919587
+F1:  0.5761478163493841
+Accuracy -0.9939809746893244
+F1:  0.5827814569536424
+Accuracy -0.9747525651259094
+F1:  0.58157602663707
+Accuracy -0.9522829521379251
+Training time 0:01:05

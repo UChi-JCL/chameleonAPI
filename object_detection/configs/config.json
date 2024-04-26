@@ -1,0 +1,41 @@
+{
+    "sunhacks": {
+        "th1": 0.15,
+        "th2": 0.5,
+        "th3": 0.15,
+        "th4": 0.15,
+        "specialized_path": "checkpoints/natural.pth",
+        "specialized_class": "natural"
+    },
+    "sbhacks": {
+        "th1": 0.4,
+        "th2": 0.5,
+        "th3": 0.2,
+        "th4": 0.25,
+        "specialized_path": "checkpoints/natural.pth",
+        "specialized_class": "natural"
+    },
+    "seefar": {
+        "th1": 0.2,
+        "th2": 0.35,
+        "th3": 0.15,
+        "specialized_path": "pretrained",
+        "specialized_class": "artificial"
+    },
+"equip": {
+    "th1": 0.3,
+    "th2": 0.4,
+    "th3": 0.2,
+    "th4": 0.3,
+    "specialized_path": "checkpoints/artificial.pth",
+    "specialized_class": "artificial"
+},
+"flooddepth": {
+    "th1": 0.2,
+    "th2": 0.45,
+    "th3": 0.2,
+    "th4": 0.25,
+    "specialized_path": "checkpoints/system.pth",
+    "specialized_class": "system"
+}
+}

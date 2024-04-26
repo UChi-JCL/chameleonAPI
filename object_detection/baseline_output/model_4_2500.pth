@@ -1,0 +1,15 @@
+Not using distributed mode
+Namespace(aspect_ratio_group_factor=3, batch_size=4, data_path='/dataheart/yuhanl.used/coco/', dataset='coco', device='cuda', dist_url='env://', distributed=False, epochs=26, extra_input='data/split5.csv', iou_th=0.3, lr=0.001, lr_gamma=0.1, lr_step_size=8, lr_steps=[16, 22], model='fasterrcnn_mobilenet_v3_large_fpn', momentum=0.9, our_loss='False', output_dir='checkpoints', pretrained=True, print_freq=20, resume='ckpt/baseline_vehicle/model_5_2000.pth', split='test', start_epoch=0, test_only=False, th=0.7, weight_decay=0.0001, wl_path='wl_mapping5.csv', wl_path_test='wl_mapping4.csv', workers=4, world_size=1)
+Loading data
+loading annotations into memory...
+Done (t=4.00s)
+creating index...
+index created!
+Creating data loaders
+Creating model
+LOading weights!!!!!!!
+Resume training
+Start testing
+lenght of data:  2460
+F1:  0.5966101694915253
+Accuracy 0.10321141443590427
