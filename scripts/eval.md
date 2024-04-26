@@ -71,5 +71,5 @@ results_\<Type of APP\>_our.csv, results_\<Type of APP\>_pretrained.csv,results_
 Where \<Type of APP\> can be tf, mc.
 
 
-
-
+## Getting Table 3
+After running the above commands, you can get the summary by running ```python scripts/draw_table.py ``` under the root path ``` <YOUR PATH TO THE GITHUB REPO>/chameleonAPI/ ```
