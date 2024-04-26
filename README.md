@@ -31,7 +31,7 @@ Please check if you are able to download ChameleonAPI (and baseline) models in t
 
 
 
-## Reproducing the main results (Table 3)
+## Reproducing the main results
 Details in [here](scripts/eval.md)
 
 ## Contact
