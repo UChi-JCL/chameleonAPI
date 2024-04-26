@@ -1,3 +1,11 @@
+# Overview 
+
+This is the artifact for ChamleonAPI: Automatic and Efficient Customization of Neural Networks for ML Applications (to appear at OSDI 24). 
+
+This artifact contains the code and trained model weights required to reproduce the key results in the paper (you may find it at the HotCRP website). 
+
+The installation of required packages can be found at install.md, and for reproducing the results, you may find it at scripts/eval.md. 
+
 #  Structure of the repo
 
 ```scripts/```: This contains the scripts to plot Table 3. 
@@ -25,3 +33,7 @@ Please check if you are able to download ChameleonAPI (and baseline) models in t
 
 ## Reproducing the main results (Table 3)
 Details in [here](scripts/eval.md)
+
+## Contact
+
+Yuhan Liu (yuhanl@uchicago.edu)
