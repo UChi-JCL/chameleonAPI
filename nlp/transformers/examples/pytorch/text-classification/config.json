@@ -1,18 +1,9 @@
 {
-    "dmnmd": {
-        "th1": 0.9,
-        "th2": 0.5,
-        "th3": 0.99,
-        "th4": 0.5,
-        "specialized_model": "checkpoints/health2.pt",
-        "specialized_labels": "3",
-        "specialized_class": "health2"
-    },
     "twitter": {
         "th1": 0.9,
         "th2": 0.3,
-        "th3": 0.8,
-        "th4": 0.9,
+        "th3": 0.6,
+        "th4": 0.5,
         "specialized_model": "checkpoints/sensitive.pt",
         "specialized_labels": "7",
         "specialized_class": "sensitive"
@@ -26,7 +17,15 @@
         "specialized_labels": "4",
         "specialized_class": "business"
     },
-   
+    "dmnmd": {
+        "th1": 0.9,
+        "th2": 0.5,
+        "th3": 0.99,
+        "th4": 0.5,
+        "specialized_model": "checkpoints/health2.pt",
+        "specialized_labels": "3",
+        "specialized_class": "health2"
+    },
     "HPFL": {
         "th1": 0.9,
         "th2": 0.3,

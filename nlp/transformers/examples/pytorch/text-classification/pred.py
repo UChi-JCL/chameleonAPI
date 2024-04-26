@@ -44,14 +44,7 @@ if __name__ == "__main__":
             "soup":  {0: [4, 12], 1: [14, 4, 18]} 
         }
     wl_mapping = app_to_wl_mapping[args.app]
-    # wl_mapping = {0: [7, 16]} # dmnmd
-    # wl_mapping = {0: [12, 15]} # HPFL 
-    # wl_mapping = {0: [12, 10]} # MirrorD
-    # wl_mapping = {0: [3, 7, 8]} # noteS
-    # wl_mapping = {0: [1, 12]} # penn
-    # wl_mapping = {0: [12], 1: [4, 14, 18]} # sociale
-    # wl_mapping = {0: [12, 14]}d # twitter
-    # wl_mapping = {0: [4, 12], 1: [14, 4, 18]} # soup
+
     acc_dict = {}
     for i in range(len(wl_mapping)):
         acc_dict[i] = []    
@@ -96,8 +89,6 @@ if __name__ == "__main__":
             print(precision, recall)
             precisions += [precision]
             recalls += [recall]
-            # if output.logits.softmax(dim=1) > 0.5:
-            #     print(i, text, output.logits.argmax().item(), output.logits.softmax(dim=1).max().item())
         print(sum(precisions) / len(precisions), sum(recalls) / len(recalls))   
     else:
         for i in tqdm(range(len(ds[split]))):

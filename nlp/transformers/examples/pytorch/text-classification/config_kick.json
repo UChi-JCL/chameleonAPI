@@ -1,0 +1,12 @@
+{
+     "twitter": {
+        "th1": 0.9,
+        "th2": 0.3,
+        "th3": 0.6,
+        "th4": 0.9,
+        "specialized_model": "checkpoints/sensitive.pt",
+        "specialized_labels": "7",
+        "specialized_class": "sensitive"
+    }
+    
+}

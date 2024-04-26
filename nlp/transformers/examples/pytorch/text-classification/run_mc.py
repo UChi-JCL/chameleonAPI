@@ -4,6 +4,7 @@ import json
 import subprocess
 import pandas as pd
 
+
 all_configs = json.load(open("config_mc.json"))
 
 for app_name in all_configs.keys():
