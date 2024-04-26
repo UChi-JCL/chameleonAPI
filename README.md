@@ -29,7 +29,11 @@ Please check if you are able to download ChameleonAPI (and baseline) models in t
 
 ``` wget https://s3-us-east-2.amazonaws.com/chameleonapi/nlp_models.zip ```
 
+To run a "hello-world" experiment, run the following:
 
+```
+bash run.sh
+```
 
 ## Reproducing the main results
 Details in [here](scripts/eval.md)
