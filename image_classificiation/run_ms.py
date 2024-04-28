@@ -3,6 +3,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 import json
 import subprocess
 import pandas as pd
+
 all_configs = pd.read_csv("configs/chameleonAPI_MS.csv")
 for i in range(len(all_configs)):
     app_name = all_configs.iloc[i]['App name'].lower()
@@ -60,13 +61,13 @@ for i in range(len(all_configs)):
         subprocess.run(['python', 'infer_multi_select.py', '--input_size', '448', 
         '--wl_path', f"configs/wl_{app_name}.csv",  
         '--validation_data_file', f"data/{app_name}.csv", 
-        '--top', str(all_configs.iloc[i][7]), 
+        '--top', str(spec_configs[app_name]["top"]), 
         '--model_name', 'tresnet_l', 
         '--model_path', 'Open_ImagesV6_TRresNet_L_448.pth',
         '--pic_path', 'test',
-        '--split', str(all_configs.iloc[i][8]),
+        '--split', str(spec_configs[app_name]["split"]),
         '--checkpoint_path', f"all_checkpoints/pretrained.ckpt",
-        '--th', str(all_configs.iloc[i][9]),
+        '--th',str(spec_configs[app_name]["th"]),
          '--method', 'spec',
         '--app', app_name,
         '--app_type', 'multi_select'
@@ -89,8 +90,3 @@ for i in range(len(all_configs)):
             ])
         
         
-
-for index in ["pretrained", "baseline", "our", "spec"]:
-# for index in ["spec"]:
-    df = pd.read_csv(f"results/results_multi_select_{index}.csv")
-    print(index, df["precision"].mean())        
