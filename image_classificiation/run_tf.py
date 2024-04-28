@@ -3,7 +3,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 import json
 import subprocess
 import pandas as pd
-# Remove a directory 
+
 all_configs = pd.read_csv("configs/chameleonAPI_TF.csv")
 for i in range(len(all_configs)):
     app_name = all_configs.iloc[i]['App name'].lower()
@@ -62,13 +62,13 @@ for i in range(len(all_configs)):
         subprocess.run(['python', 'pred.py', '--input_size', '448', 
         '--wl_path', f"configs/wl_{app_name}.csv",  
         '--validation_data_file', f"data/{app_name}.csv", 
-        '--top', str(all_configs.iloc[i][7]), 
+        '--top',str(spec_configs[app_name]["top"]), 
         '--model_name', 'tresnet_l', 
         '--model_path', 'all_checkpoints/Open_ImagesV6_TRresNet_L_448.pth',
         '--pic_path', 'test',
-        '--split', str(all_configs.iloc[i][8]),
+        '--split',str(spec_configs[app_name]["split"]),
         '--checkpoint_path', f"all_checkpoints/pretrained.ckpt",
-        '--th', str(all_configs.iloc[i][9]),
+        '--th', str(spec_configs[app_name]["th"]),
          '--method', 'spec',
         '--app', app_name,
         '--app_type', 'TF'
