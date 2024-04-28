@@ -73,3 +73,5 @@ Where \<Type of APP\> can be tf, mc.
 
 ## Getting Table 3
 After running the above commands, you can get the summary by running ```python scripts/draw_table.py ``` under the root path ``` <YOUR PATH TO THE GITHUB REPO>/chameleonAPI/ ```
+
+You will see the output ![Table 3](results.png "Results")
