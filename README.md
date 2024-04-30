@@ -17,7 +17,7 @@ The installation of required packages can be found at install.md, and for reprod
 ```nlp/ ```: This contains the scripts to run evaluation for the text topic classification apps. 
 
 ## Installation 
-Go to [install.md](scripts/install.md)
+Go to [install.md](install.md)
 
 ## Kick-the-tire experiments
 
@@ -29,7 +29,9 @@ Please check if you are able to download ChameleonAPI (and baseline) models in t
 
 ``` wget https://s3-us-east-2.amazonaws.com/chameleonapi/nlp_models.zip ```
 
-To run a "hello-world" experiment, run the following:
+To run a "hello-world" experiment, first, make sure the environment is installed [install.md](install.md).
+
+Then, run the following code:
 
 ```
 bash run.sh

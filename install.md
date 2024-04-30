@@ -14,6 +14,11 @@ Follow the instructions to finish installing miniconda.
 
 ### Install ChameleonAPI's required packages 
 
+First, change the path in scripts/install.sh: replace <PATH TO MINICONDA> to the path you chose in the previous step.
+
+Then, run
+
 ```
-conda env create -f env.yml 
+bash install.sh
 ```
+Then you should be able to activate the environment ```cc``` and run the experiments. 
