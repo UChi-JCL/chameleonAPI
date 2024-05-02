@@ -14,10 +14,6 @@ Follow the instructions to finish installing miniconda.
 
 ### Install ChameleonAPI's required packages 
 
-First, change the path in scripts/install.sh: replace <PATH TO MINICONDA> to the path you chose in the previous step.
-
-Then, run
-
 ```
 bash scripts/install.sh
 ```
