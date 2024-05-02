@@ -1,4 +1,4 @@
-To install necessary packages required to run ChameleonAPI, please install the conda environment with ```env.yml```. 
+Follow the steps to install necessary packages:
 
 ### Install miniconda
 

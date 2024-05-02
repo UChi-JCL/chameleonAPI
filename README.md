@@ -34,7 +34,7 @@ To run a "hello-world" experiment, first, make sure the environment is installed
 Then, run the following code:
 
 ```
-bash run.sh
+bash scripts/run.sh
 ```
 
 ## Reproducing the main results
