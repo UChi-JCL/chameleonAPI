@@ -7,7 +7,7 @@ If miniconda (or anaconda) is not installed on your local machine, install it wi
 ```
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 
-bash https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+bash ./Miniconda3-latest-Linux-x86_64.sh
 ```
 
 Follow the instructions to finish installing miniconda. 
@@ -19,6 +19,6 @@ First, change the path in scripts/install.sh: replace <PATH TO MINICONDA> to the
 Then, run
 
 ```
-bash install.sh
+bash scripts/install.sh
 ```
 Then you should be able to activate the environment ```cc``` and run the experiments. 
