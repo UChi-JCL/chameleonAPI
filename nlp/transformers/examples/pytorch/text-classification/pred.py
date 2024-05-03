@@ -89,7 +89,7 @@ if __name__ == "__main__":
             print(precision, recall)
             precisions += [precision]
             recalls += [recall]
-        print(sum(precisions) / len(precisions), sum(recalls) / len(recalls))   
+        # print(sum(precisions) / len(precisions), sum(recalls) / len(recalls))   
     else:
         for i in tqdm(range(len(ds[split]))):
             text = ds[split]['text'][i]
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         acc = 0
         for i in acc_dict:
             acc += sum(acc_dict[i]) / len(acc_dict[i])
-        print(acc / (len(acc_dict)  ))
+        # print(acc / (len(acc_dict)  ))
         if f"results_{args.app_type}_{args.method}.csv" not in os.listdir("results"):
             df = pd.DataFrame({"app": [args.app], "precision": [acc / (len(acc_dict)  )]})
             df.to_csv(f"results/results_{args.app_type}_{args.method}.csv", index=False)
