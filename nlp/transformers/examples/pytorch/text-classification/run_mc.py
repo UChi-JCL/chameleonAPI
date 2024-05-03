@@ -5,7 +5,7 @@ import subprocess
 import pandas as pd
 
 
-all_configs = json.load(open("config_mc.json"))
+all_configs = json.load(open("configs/config_mc.json"))
 
 for app_name in all_configs.keys():
     # Pretrained model inference
