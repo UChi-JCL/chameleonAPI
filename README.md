@@ -29,7 +29,13 @@ Please check if you are able to download ChameleonAPI (and baseline) models in t
 
 ``` wget https://s3-us-east-2.amazonaws.com/chameleonapi/nlp_models.zip ```
 
-To run a "hello-world" experiment, first, make sure the environment is installed [install.md](install.md).
+To run a "hello-world" experiment, first, make sure the environment is installed:
+We provide two ways to install the packages, 
+
+#### Docker image 
+See [install_with_docker.md](scripts/install_with_docker.md).
+#### Install with Miniconda
+See [install.md](install.md).
 
 Then, run the following code:
 
