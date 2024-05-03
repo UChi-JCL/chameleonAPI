@@ -1,0 +1,48 @@
+{
+    "dmnmd": {
+        "th1": 0.9,
+        "th2": 0.5,
+        "th3": 0.99,
+        "th4": 0.5,
+        "specialized_model": "checkpoints/health2.pt",
+        "specialized_labels": "3",
+        "specialized_class": "health2"
+    },
+    
+    "penn": {
+        "th1": 0.9,
+        "th2": 0.6,
+        "th3": 0.7,
+        "th4": 0.9,
+        "specialized_model": "checkpoints/business.pt",
+        "specialized_labels": "4",
+        "specialized_class": "business"
+    },
+   
+    "HPFL": {
+        "th1": 0.9,
+        "th2": 0.3,
+        "th3": 0.9,
+        "th4": 0.9,
+        "specialized_model": "checkpoints/business.pt",
+        "specialized_labels": "4",
+        "specialized_class": "business"
+    },
+    "twitter": {
+        "th1": 0.9,
+        "th2": 0.3,
+        "th3": 0.8
+    },
+    "notes": {
+        "th1": 0.2,
+        "th2": 0.3,
+        "th3": 0.3,
+        "th4": 0.5,
+        "specialized_model": "checkpoints/news.pt,checkpoints/health.pt",
+        "specialized_labels": "4,5",
+        "specialized_class": "news,health"
+    }
+    
+ 
+    
+}
