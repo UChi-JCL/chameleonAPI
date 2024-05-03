@@ -72,7 +72,6 @@ for i in range(len(all_configs)):
          '--method', 'spec',
         '--app', app_name,
         '--app_type', 'TF',
-        '--pretrained'
         ])
     else:
         subprocess.run(['python', 'infer_specialized.py', '--input_size', '448', 
