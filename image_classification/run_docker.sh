@@ -1,4 +1,3 @@
-cd /workspace/image_classification
 pip install inplace_abn
 wget https://s3-us-east-2.amazonaws.com/chameleonapi/image_classification_models.zip
 unzip image_classification_models.zip
