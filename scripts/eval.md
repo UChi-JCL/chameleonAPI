@@ -1,4 +1,5 @@
 
+Before running the code, please do ```git pull ``` first. 
 
 ## Image classification applications
 To run image classification apps, go to path ``` chameleonAPI/image_classification ```. 
@@ -12,10 +13,10 @@ Then, unzip it (put under the path```chameleonAPI/image_classification ```).
 Now, reproduce the accuracy in the paper by running:
 
 #### If you installed with docker images
-``` base run_docker.sh ```
+``` bash run_docker.sh ```
 
 #### If you installed with conda
-``` base run_conda.sh ```
+``` bash run_conda.sh ```
 
 ## Object detection applications
 
@@ -27,10 +28,10 @@ Then, unzip it (put under the path ```chameleonAPI/object_detection ```).
 
 Now, reproduce the accuracy of the applications by running: 
 #### If you installed with docker images
-``` base run_docker.sh ```
+``` bash run_docker.sh ```
 
 #### If you installed with conda
-``` base run_conda.sh ```
+``` bash run_conda.sh ```
 
 ## Text topic classification applications
 To run object detection apps, go to path ``` chameleonAPI/nlp/transformers/examples/pytorch/text-classification/ ```
@@ -43,10 +44,10 @@ Then, unzip it (put under the path ```chameleonAPI/nlp/transformers/examples/pyt
 Now, reproduce the accuracy of the applications by running: 
 
 #### If you installed with docker images
-``` base run_docker.sh ```
+``` bash run_docker.sh ```
 
 #### If you installed with conda
-``` base run_conda.sh ```
+``` bash run_conda.sh ```
 
 
 ## Getting Table 3

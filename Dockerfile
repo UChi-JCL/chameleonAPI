@@ -10,7 +10,7 @@ RUN apt update -y && \
 WORKDIR /workspace
 
 # Copy the current working directory contents into the container at /workspace
-COPY . /workspace
+COPY ./nlp /workspace
 
 # Install PyTorch, torchvision, and torchaudio
 RUN pip install -e nlp/transformers && \
@@ -31,5 +31,7 @@ RUN pip install -e nlp/transformers && \
     pip install tqdm && \
     pip install matplotlib && \
     pip install pycocotools
+
+
 
 # Copy the current working directory contents into the container at /workspace
