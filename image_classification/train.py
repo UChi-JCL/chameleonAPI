@@ -218,11 +218,7 @@ def main():
     # Pytorch Data loader
     train_loader = torch.utils.data.DataLoader(
         whole_dataset, batch_size=args.batch_size,
-        num_workers=args.workers, pin_memory=True, shuffle = True)
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset, batch_size=args.batch_size,
-    #     num_workers=0, pin_memory=True, sampler=train_sampler)
-
+        num_workers=0, pin_memory=True, shuffle = True)
     # Actuall Training
     train_multi_label_coco(args, model, train_loader, train_loader, args.lr, None, None, device, mapping_dict, args.limit, args.alpha, stats)
 
