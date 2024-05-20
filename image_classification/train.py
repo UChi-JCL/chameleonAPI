@@ -52,7 +52,7 @@ parser.add_argument('--epochs', default=10, type=int)
 parser.add_argument('--model_name', default='tresnet_l')
 parser.add_argument('--model_path', default=None, type=str)
 parser.add_argument('--num-classes', default=9605)
-parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 16)')
 parser.add_argument('--image-size', default=448, type=int,
                     metavar='N', help='input image size (default: 448)')
