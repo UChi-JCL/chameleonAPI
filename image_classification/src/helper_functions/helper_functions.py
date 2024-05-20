@@ -150,7 +150,7 @@ class OpenImage:
         self.target_transform = target_transform
         self.mid_to_human_class_file = pd.read_csv("oidv6-class-descriptions.csv")
         self.class_list_file = pd.read_csv("all_classes.csv")
-        state = torch.load("/home/cc//Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
+        state = torch.load("Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
 
         self.class_list = list(state['idx_to_class'].values())
         self.class_list = [i.replace("'", "") for i in self.class_list]
@@ -210,7 +210,7 @@ class OpenImageW:
         self.target_transform = target_transform
         self.mid_to_human_class_file = pd.read_csv("oidv6-class-descriptions.csv")
         self.class_list_file = pd.read_csv("all_classes.csv")
-        state = torch.load("/home/cc//Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
+        state = torch.load("Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
 
         self.class_list = list(state['idx_to_class'].values())
         self.class_list = [i.replace("'", "") for i in self.class_list]

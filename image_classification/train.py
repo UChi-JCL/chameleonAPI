@@ -18,7 +18,18 @@ from torch import nn
 import time
 import torch.distributed as dist
 import torch.multiprocessing as mp
+import numpy as np
 import torch.backends.cudnn as cudnn
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    #TODO: Do we need deterministic in cudnn ? Double check
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    # print ("Seeded everything")
+
 # torch.multiprocessing.set_start_method('spawn')
 class bottleneck_head(nn.Module):
     def __init__(self, num_features, num_classes, bottleneck_features=200):
@@ -99,7 +110,7 @@ parser.add_argument('--model_path_openimages', type=str, default='/data/yuhanl/O
 parser.add_argument('--optim', action="store_true")
 parser.add_argument('--wl_path', type=str, default='/data/yuhanl/data/yuhanl/Open_ImagesV6_TRresNet_L_448.pth')
 parser.add_argument('--ood_weights', type=str, default=None)
-
+parser.add_argument('--app_name', type=str)
 parser.add_argument('--neg', action="store_true")
 parser.add_argument('--land', action="store_true")
 
@@ -161,6 +172,7 @@ def main():
 
     args.mapping_dict = mapping_dict
     args.do_bottleneck_head = True
+    set_seed(args.seed)
     model = create_model(args)
 
     # for name, param in model.named_parameters():
@@ -172,16 +184,6 @@ def main():
         model.load_state_dict(state, strict=True)
     
 
-
-    # # model.head.fc = bottleneck_head(model.num_features, len(W)+1)
-    # if args.frozen:
-    #     for name, param in model.named_parameters():
-    #         if "body" in name:
-    #             param.requires_grad = False
-    #         if "body.layer4" in name:
-    #             param.requires_grad = True
-            # if "body.layer3" in name:
-            #     param.requires_grad = True
     if args.frozen_all:
         for name, param in model.named_parameters():
             if "body" in name:
@@ -203,7 +205,8 @@ def main():
                                     transforms.ToTensor(),
                                     # normalize, # no need, toTensor does normalization
                                 ]), start_idx = 0, end_idx = all_size)
-    torch.cuda.manual_seed(args.seed)
+    # torch.cuda.manual_seed(args.seed)
+    
     device = torch.device('cuda', args.local_rank)
     model.to(device)
     print("LOCAL RANK: ", args.local_rank)
@@ -211,7 +214,7 @@ def main():
 
 
     print("len(train_dataset)): ", len(whole_dataset))
-
+    set_seed(args.seed)
     # Pytorch Data loader
     train_loader = torch.utils.data.DataLoader(
         whole_dataset, batch_size=args.batch_size,
@@ -232,14 +235,15 @@ def train_multi_label_coco(args, model, train_loader, val_loader, lr, W, W_human
     Stop_epoch = args.stop_epoch
     weight_decay = 1e-4
     print("TRAINING WITH CUSTOM LOSS FUNCTION")
-    if args.priority:
-        criterion = AsymmetricLossCustomPriorityRankNewPriority(stats=stats, gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, alpha5=args.alpha5, alpha=args.alpha, clip=0.05, disable_torch_grad_focal_loss=True, W=W, W_human=W_human, mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, penalize_other = args.penalize_other, alpha_other=args.alpha_other, weight = args.weight_balancing, sigmoid=args.sigmoid, ood_weights=args.ood_weights)
-    elif args.ranklossnew:
-        criterion = AsymmetricLossCustomPriorityRankNew(gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, alpha5=args.alpha5, clip=0.05, disable_torch_grad_focal_loss=True, W=W, W_human=W_human, mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, penalize_other = args.penalize_other, alpha_other=args.alpha_other, weight = args.weight_balancing, sigmoid=args.sigmoid)
-    elif args.neg:
-        criterion = AsymmetricLossCustomPriorityRankNewNeg(stats=stats, gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, alpha5=args.alpha5, alpha=args.alpha, clip=0.05, disable_torch_grad_focal_loss=True, W=W, W_human=W_human, mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, penalize_other = args.penalize_other, alpha_other=args.alpha_other, weight = args.weight_balancing, sigmoid=args.sigmoid, ood_weights=args.ood_weights)
-    elif args.land:
-        criterion = AsymmetricLossCustomPriorityRankNewNegLand(stats=stats, gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, alpha5=args.alpha5, alpha=args.alpha, clip=0.05, disable_torch_grad_focal_loss=True, W=W, W_human=W_human, mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, penalize_other = args.penalize_other, alpha_other=args.alpha_other, weight = args.weight_balancing, sigmoid=args.sigmoid, ood_weights=args.ood_weights)
+    if args.neg:
+        criterion = AsymmetricLossCustomPriorityRankNewNeg(stats=stats, gamma_neg=args.gamma_neg, \
+            gamma_pos=args.gamma_pos, alpha5=args.alpha5, alpha=args.alpha, clip=0.05, \
+                disable_torch_grad_focal_loss=True, W=W, W_human=W_human, \
+                    mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, \
+                        alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, \
+                            penalize_other = args.penalize_other, alpha_other=args.alpha_other, \
+                                weight = args.weight_balancing, sigmoid=args.sigmoid, ood_weights=args.ood_weights,
+                                app_name=args.app_name)
     elif args.ms:
         criterion = AsymmetricLossCustomMS(stats=stats, gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, alpha5=args.alpha5, alpha=args.alpha, clip=0.05, disable_torch_grad_focal_loss=True, W=W, W_human=W_human, mapping_dict=mapping_dict, limit=limit, asymm = args.asymm, alpha1=args.alpha1, alpha2=args.alpha2, alpha3 = args.alpha3, penalize_other = args.penalize_other, alpha_other=args.alpha_other, weight = args.weight_balancing, sigmoid=args.sigmoid, ood_weights=args.ood_weights)
     else:
@@ -261,10 +265,11 @@ def train_multi_label_coco(args, model, train_loader, val_loader, lr, W, W_human
     start_time = time.time()
     if os.path.exists(args.ckpt_path) is False:
         os.makedirs(args.ckpt_path)
+    
     for epoch in range(Epochs):
         if epoch > Stop_epoch:
             break
-
+        set_seed(epoch)
         for i, (inputData, target, target_neg) in enumerate(train_loader):
             model.train()
             inputData = inputData.to(device)

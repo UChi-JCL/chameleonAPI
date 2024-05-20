@@ -583,508 +583,6 @@ class AsymmetricLossCustomPrioritySmallFocal(nn.Module):
         return -loss.sum()
 
 
-class AsymmetricLossCustomPrioritySmall(nn.Module):
-    def __init__(self, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-8, disable_torch_grad_focal_loss=True,W=None, W_human=None, mapping_dict=None, limit=10, asymm=False, alpha1=None, alpha2=None, alpha3=None, penalize_other=False, alpha_other=None, weight=False):
-        super(AsymmetricLossCustomPrioritySmall, self).__init__()
-
-        self.gamma_neg = gamma_neg
-        self.gamma_pos = gamma_pos
-        self.clip = clip
-        self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
-        self.eps = eps
-        self.W = W
-        self.W_human = W_human
-        state = torch.load("/Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
-        self.class_list = list(state['idx_to_class'].values())
-        self.class_list = [i.replace("'", "").replace("\"", "") for i in self.class_list]
-        recycle_labels = ['plastic', 'glass', 'paper', 'cardboard', 'metal', 'tin', 'carton']
-        donate_labels = ['clothes', 'clothing', 'shirt', 'pants', 'jacket', 'footwear', 'shoe']
-        compost_labels = ['food','snack','compost']
-        self.asymm = asymm
-        self.recycle_w_gt_ind = []
-        for label in recycle_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.recycle_w_gt_ind.append(self.class_list.index(value))
-
-        self.donate_w_gt_ind = []
-        for label in donate_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.donate_w_gt_ind.append(self.class_list.index(value))
-        self.donate_w_gt_ind = np.array(self.donate_w_gt_ind)
-        self.recycle_w_gt_ind = np.array(self.recycle_w_gt_ind)
-
-        self.compost_w_gt_ind = []
-        for label in compost_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.compost_w_gt_ind.append(self.class_list.index(value))
-        self.compost_w_gt_ind = np.array(self.compost_w_gt_ind)
-
-        self.mapping_dict = mapping_dict
-        self.alpha1 = alpha1
-        self.alpha2 = alpha2
-
-        self.penalize_other = penalize_other
-        self.alpha_other = alpha_other
-        print("PRIORITY LOSS!!!")
-        print("penalize_other: ", self.penalize_other)
-        print("recycle index: ", self.recycle_w_gt_ind)
-        print("donate index: ", self.donate_w_gt_ind)
-        print("compost index: ", self.compost_w_gt_ind)
-        print(self.alpha1)
-
-        w_human_lower = [i.lower().split(" ")[0] for i in W_human]
-
-        self.whitelist_indices = [self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind, np.array([len(W_human)])]
-        self.whitelist_mapping = {}
-
-        for i in range(len(W_human)):
-            self.whitelist_mapping[self.class_list.index(W_human[i])] = find_whitelist(self.class_list.index(W_human[i]), self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind)
-        print(self.whitelist_mapping)
-        self.priority_list = [1, 2, 3, 4]
-        self.alpha3 = alpha3
-        print("Alpha3 : alpha3")
-    def find_w(self, j):
-        if j in self.compost_w_gt_ind:
-            return 1
-        if j in self.recycle_w_gt_ind:
-            return 2
-        if j in self.donate_w_gt_ind:
-            return 3
-        return 4
-    def find_gt_whitelist(self, j):
-        gt_whitelist = []
-        min_index = 99999
-        if torch.sum(j[self.compost_w_gt_ind] ) > 0:
-            gt_whitelist.append(1)
-            min_index = min(min_index, self.priority_list.index(1))
-        if torch.sum(j[self.recycle_w_gt_ind] ) > 0:
-            gt_whitelist.append(2)
-            min_index = min(min_index, self.priority_list.index(2))
-        if torch.sum(j[self.donate_w_gt_ind] ) > 0:
-            gt_whitelist.append(3)
-            min_index = min(min_index, self.priority_list.index(3))
-        if len(gt_whitelist) == 0:
-            gt_whitelist.append(4)
-        return gt_whitelist, min_index
-    def forward(self, x, y):
-        """"
-        Parameters
-        ----------
-        x: input logits
-        y: targets (multi-label binarized vector)
-        """
-
-        # Calculating Probabilities
-        x_sigmoid = torch.sigmoid(x)
-        xs_pos = x_sigmoid
-        xs_neg = 1 - x_sigmoid
-
-        # Asymmetric Clipping
-        if self.clip is not None and self.clip > 0:
-            xs_neg = (xs_neg + self.clip).clamp(max=1)
-        y_np = y
-        loss = torch.zeros(y.shape).cuda()
-        x_sigmoid_np = x_sigmoid
-        for i in range(y.shape[0]):
-            y_telda = np.zeros(y[i].shape)
-            help_y_recycle = y_np[i][self.recycle_w_gt_ind]
-            help_y_donate = y_np[i][self.donate_w_gt_ind]
-            help_y_compost = y_np[i][self.compost_w_gt_ind]
-            y_telda = y_np[i]
-            active_ind = None # all the indices except the indices in the whitelist
-            whitelist_ind = None
-            arg_sort = torch.argsort(x_sigmoid[i], descending=True)
-            loss[i] = y[i] * torch.log(xs_pos[i].clamp(min=self.eps)) + (1 - y[i]) * torch.log(xs_neg[i].clamp(min=self.eps))
-            first_gt_whitelist_index = -1
-            gt_whitelist_index, min_index = self.find_gt_whitelist(y_np[i])
-
-            penalty_vector = np.zeros(len(y_np[i]))
-
-            for j in arg_sort[:10]:
-                index = j.item()
-                wl_index = self.find_w(index)
-                if index not in self.whitelist_mapping:
-                    # Penalize less if errors in correct Other
-                    if gt_whitelist_index[0] == 4:
-                        if y[i][index] == 0:
-                            if self.penalize_other:
-                                loss[i][index] *= self.alpha3
-                                penalty_vector[index] = self.alpha3
-                elif wl_index in gt_whitelist_index:
-                    if y[i][index] == 0:
-                        loss[i][index] *= self.alpha3
-                        penalty_vector[index] = self.alpha3
-
-            # if np.sum(penalty_vector == self.alpha3) > 0:
-            #     print("Penalized greatly: ", np.sum(penalty_vector == self.alpha3))
-            #     print("++++++++++++")
-
-        if self.gamma_neg > 0 or self.gamma_pos > 0 :
-            if self.disable_torch_grad_focal_loss:
-                torch.set_grad_enabled(False)
-            pt0 = xs_pos * y
-            pt1 = xs_neg * (1 - y)  # pt = p if t > 0 else 1-p
-            pt = pt0 + pt1
-            one_sided_gamma = self.gamma_pos * y + self.gamma_neg * (1 - y)
-            one_sided_w = torch.pow(1 - pt, one_sided_gamma)
-            if self.disable_torch_grad_focal_loss:
-                torch.set_grad_enabled(True)
-            loss *= one_sided_w
-
-        return -loss.sum()
-
-
-class AsymmetricLossCustomPriorityLargeOld(nn.Module):
-    def __init__(self, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-8, disable_torch_grad_focal_loss=True,W=None, W_human=None, mapping_dict=None, limit=10, asymm=False, alpha1=None, alpha2=None, alpha3=None, penalize_other=False, alpha_other=None, weight=False):
-        super(AsymmetricLossCustomPriorityLargeOld, self).__init__()
-
-        self.gamma_neg = gamma_neg
-        self.gamma_pos = gamma_pos
-        self.clip = clip
-        self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
-        self.eps = eps
-        self.W = W
-        self.W_human = W_human
-        state = torch.load("/Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
-        self.class_list = list(state['idx_to_class'].values())
-        self.class_list = [i.replace("'", "").replace("\"", "") for i in self.class_list]
-        recycle_labels = ['plastic', 'glass', 'paper', 'cardboard', 'metal', 'tin', 'carton']
-        donate_labels = ['clothes', 'clothing', 'shirt', 'pants', 'jacket', 'footwear', 'shoe']
-        compost_labels = ['food','snack','compost']
-        self.asymm = asymm
-        self.recycle_w_gt_ind = []
-        for label in recycle_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.recycle_w_gt_ind.append(self.class_list.index(value))
-
-        self.donate_w_gt_ind = []
-        for label in donate_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.donate_w_gt_ind.append(self.class_list.index(value))
-        self.donate_w_gt_ind = np.array(self.donate_w_gt_ind)
-        self.recycle_w_gt_ind = np.array(self.recycle_w_gt_ind)
-
-        self.compost_w_gt_ind = []
-        for label in compost_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.compost_w_gt_ind.append(self.class_list.index(value))
-        self.compost_w_gt_ind = np.array(self.compost_w_gt_ind)
-
-        self.mapping_dict = mapping_dict
-        self.alpha1 = alpha1
-        self.alpha2 = alpha2
-
-        self.penalize_other = penalize_other
-        self.alpha_other = alpha_other
-        print("PRIORITY LOSS!!!")
-        print("penalize_other: ", self.penalize_other)
-        print("recycle index: ", self.recycle_w_gt_ind)
-        print("donate index: ", self.donate_w_gt_ind)
-        print("compost index: ", self.compost_w_gt_ind)
-        print(self.alpha1)
-
-        w_human_lower = [i.lower().split(" ")[0] for i in W_human]
-
-        self.whitelist_indices = [self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind]
-        self.whitelist_mapping = {}
-        self.total_indices = np.array([True for i in range(len(self.class_list))])
-        for item in self.whitelist_indices:
-            self.total_indices[item] = False
-        for i in range(len(W_human)):
-            self.whitelist_mapping[self.class_list.index(W_human[i])] = find_whitelist(self.class_list.index(W_human[i]), self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind)
-        print(self.whitelist_mapping)
-        self.whitelist_indices_bool = []
-        for item in self.whitelist_indices:
-            indices =  np.array([False for i in range(len(self.class_list))])
-            indices[item] = True
-            self.whitelist_indices_bool.append(indices)
-        self.priority_list = [1, 2, 3, 4]
-        self.alpha3 = alpha3
-        print("Large loss!!!")
-    def find_w(self, j):
-        if j in self.compost_w_gt_ind:
-            return 1
-        if j in self.recycle_w_gt_ind:
-            return 2
-        if j in self.donate_w_gt_ind:
-            return 3
-        return 4
-    def find_gt_whitelist(self, j):
-        gt_whitelist = []
-        min_index = 99999
-        if torch.sum(j[self.compost_w_gt_ind] ) > 0:
-            gt_whitelist.append(1)
-            min_index = min(min_index, self.priority_list.index(1))
-        if torch.sum(j[self.recycle_w_gt_ind] ) > 0:
-            gt_whitelist.append(2)
-            min_index = min(min_index, self.priority_list.index(2))
-        if torch.sum(j[self.donate_w_gt_ind] ) > 0:
-            gt_whitelist.append(3)
-            min_index = min(min_index, self.priority_list.index(3))
-        if len(gt_whitelist) == 0:
-            gt_whitelist.append(4)
-        return gt_whitelist, min_index
-    def forward(self, x, y):
-        """"
-        Parameters
-        ----------
-        x: input logits
-        y: targets (multi-label binarized vector)
-        """
-
-        # Calculating Probabilities
-        x_sigmoid = torch.sigmoid(x)
-        xs_pos = x_sigmoid
-        xs_neg = 1 - x_sigmoid
-
-        # Asymmetric Clipping
-        if self.clip is not None and self.clip > 0:
-            xs_neg = (xs_neg + self.clip).clamp(max=1)
-        y_np = y
-        loss = torch.zeros(y.shape).cuda()
-        x_sigmoid_np = x_sigmoid
-        for i in range(y.shape[0]):
-            y_telda = np.zeros(y[i].shape)
-            help_y_recycle = y_np[i][self.recycle_w_gt_ind]
-            help_y_donate = y_np[i][self.donate_w_gt_ind]
-            help_y_compost = y_np[i][self.compost_w_gt_ind]
-            y_telda = y_np[i]
-            active_ind = None # all the indices except the indices in the whitelist
-            whitelist_ind = None
-            arg_sort = torch.argsort(x_sigmoid[i], descending=True)
-            loss[i] = y[i] * torch.log(xs_pos[i].clamp(min=self.eps)) + (1 - y[i]) * torch.log(xs_neg[i].clamp(min=self.eps))
-            first_gt_whitelist_index = -1
-            gt_whitelist_index, min_index = self.find_gt_whitelist(y_np[i])
-            penalty_vector = torch.ones(len(y_np[i])).cuda() * self.alpha1
-            if gt_whitelist_index[0] == 4:
-                penalty_vector[self.total_indices] = self.alpha3
-                loss[i] *= penalty_vector
-            else:
-                # for j in range(1, 4):
-                #     if j not in gt_whitelist_index:
-                #         penalty_vector[self.whitelist_indices_bool[j - 1]] = 1/self.alpha3
-                # loss[i] *= penalty_vector
-                for gt_index in gt_whitelist_index:
-                    max_pred_index = torch.argmax(xs_pos[i][self.whitelist_indices[gt_index-1]])
-                    global_max_pred_index = self.whitelist_indices[gt_index-1][max_pred_index]
-                    # print(gt_index)
-                    # print(self.whitelist_indices[gt_index - 1])
-                    for ind in self.whitelist_indices[gt_index - 1]:
-                        loss[i][ind] *= self.alpha3
-                    loss[i][global_max_pred_index] = torch.log(xs_pos[i][global_max_pred_index].clamp(min=self.eps)) * self.alpha1 * self.alpha2
-                    # loss[i][global_max_pred_index] = torch.log(xs_pos[i][global_max_pred_index].clamp(min=self.eps)) * self.alpha1 * 10
-                    # print(gt_index)
-                    # print(xs_pos[i][self.whitelist_indices[gt_index-1][max_pred_index]])
-                    # print(self.class_list[self.whitelist_indices[gt_index-1][max_pred_index]])
-                    # print("++++++++++++")
-                if self.penalize_other:
-                    penalty_vector[self.total_indices] = self.alpha3
-                    loss[i] *= penalty_vector
-            penalty_vector_cpu = penalty_vector.cpu().numpy()
-            # if np.sum(penalty_vector_cpu == self.alpha3) > 0 and gt_whitelist_index[0] != 4:
-            #     # print(gt_whitelist_index)
-            #     # print("Penalized greatly: ", np.sum(penalty_vector_cpu != self.alpha3))
-            #     print(xs_pos[i][penalty_vector_cpu != self.alpha3])
-            #     # print(np.array(self.class_list)[y_np[i].cpu().numpy() == 1])
-            #     # print(np.array(self.class_list)[penalty_vector_cpu != self.alpha3])
-            #     print("++++++++++++")
-
-        if self.gamma_neg > 0 or self.gamma_pos > 0 :
-            if self.disable_torch_grad_focal_loss:
-                torch.set_grad_enabled(False)
-            pt0 = xs_pos * y
-            pt1 = xs_neg * (1 - y)  # pt = p if t > 0 else 1-p
-            pt = pt0 + pt1
-            one_sided_gamma = self.gamma_pos * y + self.gamma_neg * (1 - y)
-            one_sided_w = torch.pow(1 - pt, one_sided_gamma)
-            if self.disable_torch_grad_focal_loss:
-                torch.set_grad_enabled(True)
-            loss *= one_sided_w
-
-        return -loss.sum()
-
-class AsymmetricLossCustomPriorityLarge(nn.Module):
-    def __init__(self, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-8, disable_torch_grad_focal_loss=True,W=None, W_human=None, mapping_dict=None, limit=10, asymm=False, alpha1=None, alpha2=None, alpha3=None, penalize_other=False, alpha_other=None, weight=False):
-        super(AsymmetricLossCustomPriorityLarge, self).__init__()
-
-        self.gamma_neg = gamma_neg
-        self.gamma_pos = gamma_pos
-        self.clip = clip
-        self.disable_torch_grad_focal_loss = disable_torch_grad_focal_loss
-        self.eps = eps
-        self.W = W
-        self.W_human = W_human
-        state = torch.load("/Open_ImagesV6_TRresNet_L_448.pth", map_location='cpu')
-        self.class_list = list(state['idx_to_class'].values())
-        self.class_list = [i.replace("'", "").replace("\"", "") for i in self.class_list]
-        recycle_labels = ['plastic', 'glass', 'paper', 'cardboard', 'metal', 'tin', 'carton']
-        donate_labels = ['clothes', 'clothing', 'shirt', 'pants', 'jacket', 'footwear', 'shoe']
-        compost_labels = ['food','snack','compost']
-        self.asymm = asymm
-        self.recycle_w_gt_ind = []
-        for label in recycle_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.recycle_w_gt_ind.append(self.class_list.index(value))
-
-        self.donate_w_gt_ind = []
-        for label in donate_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.donate_w_gt_ind.append(self.class_list.index(value))
-        self.donate_w_gt_ind = np.array(self.donate_w_gt_ind)
-        self.recycle_w_gt_ind = np.array(self.recycle_w_gt_ind)
-
-        self.compost_w_gt_ind = []
-        for label in compost_labels:
-            if label not in mapping_dict:
-                continue
-            for value in mapping_dict[label][:limit]:
-                self.compost_w_gt_ind.append(self.class_list.index(value))
-        self.compost_w_gt_ind = np.array(self.compost_w_gt_ind)
-
-        self.mapping_dict = mapping_dict
-        self.alpha1 = alpha1
-        self.alpha2 = alpha2
-
-        self.penalize_other = penalize_other
-        self.alpha_other = alpha_other
-        print("PRIORITY LOSS!!!")
-        print("penalize_other: ", self.penalize_other)
-        print("recycle index: ", self.recycle_w_gt_ind)
-        print("donate index: ", self.donate_w_gt_ind)
-        print("compost index: ", self.compost_w_gt_ind)
-        print(self.alpha1)
-
-        w_human_lower = [i.lower().split(" ")[0] for i in W_human]
-
-        self.whitelist_indices = [self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind]
-        self.whitelist_mapping = {}
-        self.total_indices = np.array([True for i in range(len(self.class_list))])
-        self.wl_indices = np.array([False for i in range(len(self.class_list))])
-        for item in self.whitelist_indices:
-            self.total_indices[item] = False
-            self.wl_indices[item] = True
-        for i in range(len(W_human)):
-            self.whitelist_mapping[self.class_list.index(W_human[i])] = find_whitelist(self.class_list.index(W_human[i]), self.compost_w_gt_ind, self.recycle_w_gt_ind, self.donate_w_gt_ind)
-        print(self.whitelist_mapping)
-        self.whitelist_indices_bool = []
-        for item in self.whitelist_indices:
-            indices =  np.array([False for i in range(len(self.class_list))])
-            indices[item] = True
-            self.whitelist_indices_bool.append(indices)
-        self.priority_list = [1, 2, 3, 4]
-        self.alpha3 = alpha3
-        print("Large loss!!!")
-    def find_w(self, j):
-        if j in self.compost_w_gt_ind:
-            return 1
-        if j in self.recycle_w_gt_ind:
-            return 2
-        if j in self.donate_w_gt_ind:
-            return 3
-        return 4
-    def convert_target(self, gt_whitelist_index, y_np):
-        target = torch.zeros(4).cuda()
-        target[gt_whitelist_index[0] - 1] = 1
-        # if torch.sum(y_np[self.total_indices]) > 0:
-        #     target[-1] = 1
-        return target
-    def convert_x_pos(self, xs_pos):
-        x_pos_vec = torch.zeros(4).cuda()
-        for i in range(3):
-            x_pos_vec[i] = torch.max(xs_pos[self.whitelist_indices[i]])
-        x_pos_vec[-1] = torch.max(xs_pos[self.total_indices])
-        return x_pos_vec
-    def find_gt_whitelist(self, j):
-        gt_whitelist = []
-        min_index = 99999
-        if torch.sum(j[self.compost_w_gt_ind] ) > 0:
-            gt_whitelist.append(1)
-            min_index = min(min_index, self.priority_list.index(1))
-        if torch.sum(j[self.recycle_w_gt_ind] ) > 0:
-            gt_whitelist.append(2)
-            min_index = min(min_index, self.priority_list.index(2))
-        if torch.sum(j[self.donate_w_gt_ind] ) > 0:
-            gt_whitelist.append(3)
-            min_index = min(min_index, self.priority_list.index(3))
-        if len(gt_whitelist) == 0:
-            gt_whitelist.append(4)
-        return gt_whitelist, min_index
-    def forward(self, x, y):
-        """"
-        Parameters
-        ----------
-        x: input logits
-        y: targets (multi-label binarized vector)
-        """
-
-        # Calculating Probabilities
-        x_sigmoid = torch.sigmoid(x)
-        xs_pos = x_sigmoid
-        xs_neg = 1 - x_sigmoid
-
-        # Asymmetric Clipping
-        if self.clip is not None and self.clip > 0:
-            xs_neg = (xs_neg + self.clip).clamp(max=1)
-        y_np = y
-        loss = torch.zeros(y.shape).cuda()
-        x_sigmoid_np = x_sigmoid
-        for i in range(y.shape[0]):
-            y_telda = np.zeros(y[i].shape)
-            help_y_recycle = y_np[i][self.recycle_w_gt_ind]
-            help_y_donate = y_np[i][self.donate_w_gt_ind]
-            help_y_compost = y_np[i][self.compost_w_gt_ind]
-            y_telda = y_np[i]
-            active_ind = None # all the indices except the indices in the whitelist
-            whitelist_ind = None
-            arg_sort = torch.argsort(x_sigmoid[i], descending=True)
-            loss[i] = y[i] * torch.log(xs_pos[i].clamp(min=self.eps)) + (1 - y[i]) * torch.log(xs_neg[i].clamp(min=self.eps))
-            first_gt_whitelist_index = -1
-            gt_whitelist_index, min_index = self.find_gt_whitelist(y_np[i])
-            target_vector = self.convert_target(gt_whitelist_index, y_np[i])
-            x_vector = self.convert_x_pos(xs_pos[i])
-            # torch.max(xs_pos[i][mask] >= torch.sort(xs_pos[i], descending=True)[10])
-            # target_vector = torch.unsqueeze(target_vector, 0)
-            # x_vector = torch.unsqueeze(x_vector, 0)
-            loss_ce = F.binary_cross_entropy(x_vector, target_vector)
-            loss[i] = -loss[i] * self.alpha3 + loss_ce * (1 - self.alpha3)
-
-        return loss.sum()
-class STEFunction(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, input):
-        return (input > 0).float()
-
-    @staticmethod
-    def backward(ctx, grad_output):
-        print("Before hardtanh ", grad_output)
-        print("After hardtanh ", F.hardtanh(grad_output, min_val=-1, max_val=1))
-        return F.hardtanh(grad_output, min_val=-1, max_val=1)
-
-class StraightThroughEstimator(nn.Module):
-    def __init__(self):
-        super(StraightThroughEstimator, self).__init__()
-
-    def forward(self, x):
-        x = STEFunction.apply(x)
-        return x
-
-
 
 
 
@@ -1503,7 +1001,13 @@ class AsymmetricLossCustomMS(nn.Module):
 
 
 class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
-    def __init__(self, stats=None, gamma_neg=4, gamma_pos=1, clip=0.05, eps=1e-8, disable_torch_grad_focal_loss=True,W=None, W_human=None, mapping_dict=None, limit=10, asymm=False, alpha=0.5, alpha1=None, alpha2=None, alpha3=None, penalize_other=False, alpha_other=None, alpha5=1, weight=False, sigmoid = False, ood_weights=None):
+    def __init__(self, stats=None, gamma_neg=4, gamma_pos=1, \
+        clip=0.05, eps=1e-8, disable_torch_grad_focal_loss=True, W=None, \
+            W_human=None, mapping_dict=None, limit=10, asymm=False, \
+                alpha=0.5, alpha1=None, alpha2=None, alpha3=None, \
+                    penalize_other=False, alpha_other=None, \
+                        alpha5=1, weight=False, sigmoid = False, ood_weights=None, \
+                            app_name=None):
         super(AsymmetricLossCustomPriorityRankNewNeg, self).__init__()
 
         self.gamma_neg = gamma_neg
@@ -1529,8 +1033,7 @@ class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
 
 
         self.mapping_dict = mapping_dict
-        self.alpha1 = alpha1
-        self.alpha2 = alpha2
+        self.alpha1 = 0.1
 
         self.penalize_other = penalize_other
         self.alpha_other = alpha_other
@@ -1557,17 +1060,18 @@ class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
             indices[item] = True
             self.whitelist_indices_bool.append(torch.Tensor(indices).cuda() > 0)
         self.priority_list = np.arange(len(all_labels))
-        self.alpha3 = alpha3
         self.total_indices_cuda = torch.Tensor(self.total_indices).cuda() > 0
         self.wl_indices_cuda = torch.Tensor(self.wl_indices).cuda() > 0
         # self.wl_indices_cuda = torch.ones(len(self.class_list)).cuda()
         self.sigmoid = sigmoid
         print(self.wl_indices_cuda )
-        self.alpha = alpha
-        self.alpha5 = alpha5 
-        print(f"alpha3: {self.alpha3}, alpha2: {self.alpha2} alpha1: {self.alpha1} alpha4: {self.alpha_other} alpha5: {self.alpha5} alpha: {self.alpha}")
-        print("New loss!!!")
-
+        import json
+        with open('configs/training_configs.json', 'r') as file:
+            json_data = file.read()
+        self.training_config = json.loads(json_data)[app_name]
+        self.alpha = self.training_config['alpha4']
+        self.alpha2 = self.training_config['alpha2']
+        self.alpha3 = self.training_config['alpha3']
         self.all_wl_indices = {}
         for label in all_labels:
             self.all_wl_indices[label] = []
@@ -1602,11 +1106,7 @@ class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
         if len(gt_whitelist) == 0:
             gt_whitelist.append(len(self.all_labels))
         return gt_whitelist
-    # def our_rank_loss(self, x1, x2, margin):
-
-    #     if x2 - x1 + margin > 0:
-    #         return  5 * torch.sigmoid(x2-x1 + margin)
-    #     return torch.sigmoid(x2-x1+ margin)
+    
     def our_rank_loss(self, x1, x2, margin):
         if x2-x1+margin > 0:
             return self.alpha2 * 1/(1+torch.exp(-self.alpha3 * (x2-x1+margin)))
@@ -1651,16 +1151,8 @@ class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
             # int()
             loss_rank = 0
             if gt_whitelist_index[0] == len(self.all_labels):
-                # pass
-                #
-                # top_k_thres = 0.5
-                # top_k_thres = max(x_sorted[15], self.alpha_other)
-                
-                error += 1
                 all_non_others_vec = xs_pos[i][self.wl_indices_cuda]
-                # loss_rank += max(0, -(x_sorted[10] - torch.max(all_non_others_vec))) * self.alpha1
-
-                loss_rank += (1 - self.alpha) * self.our_rank_loss(top_k_thres, torch.max(all_non_others_vec), self.alpha1) 
+                loss_rank +=  (1- self.alpha) * self.our_rank_loss(top_k_thres, torch.max(all_non_others_vec), self.alpha1) 
                 
             else:
                 incorrect_max = []
@@ -1677,15 +1169,6 @@ class AsymmetricLossCustomPriorityRankNewNeg(nn.Module):
                 else:
                     loss_rank +=  self.our_rank_loss(max(correct_max),  top_k_thres, self.alpha1) 
 
-                # for max_gt in correct_max:
-
-                #     loss_rank +=  self.our_rank_loss(max_gt, top_k_thres, self.alpha1) 
-                # # loss_rank += (1-self.alpha) * self.our_rank_loss(top_k_thres, incorrect_max, self.alpha1) 
-                # for max_incorrect in incorrect_max:
-                #     loss_rank +=  self.our_rank_loss(top_k_thres, max_incorrect, self.alpha1) 
-                # for max_incorrect in relax_incorrect_max:
-                #     loss_rank += self.alpha * self.our_rank_loss(top_k_thres, max_incorrect, self.alpha1) 
-                # loss_rank *= self.weight_dict[self.all_labels[gt_whitelist_index[0]]] 
             loss_rank_all[i] = loss_rank
         return loss_rank_all.mean() 
 

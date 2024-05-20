@@ -1,0 +1,12 @@
+{
+    "heapsort": {
+        "alpha2": 5,
+        "alpha3": 5, 
+        "alpha4": 0.5
+    },
+    "smarth": {
+        "alpha2": 5,
+        "alpha3": 2, 
+        "alpha4": 0
+    }
+}
