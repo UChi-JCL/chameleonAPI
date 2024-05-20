@@ -7,7 +7,9 @@ sudo docker run --shm-size=10gb  --gpus all -it yuhanliuchi/chameleonapi
 ```
 
 
-To run the training code for one example app, first clone the code repo with ```git clone https://github.com/UChi-JCL/chameleonAPI.git```. If you have already cloned the repo before, please do ``` git pull```.
+To run the training code for one example app, first clone the code repo with ```git clone https://github.com/UChi-JCL/chameleonAPI.git``` (Please do a fresh clone of the code regardless of what's there in the docker image). 
+
+If you have already cloned the repo before, please do ``` git pull```.
 
 Then, please go into ```chameleonAPI/image_classification```.
 
