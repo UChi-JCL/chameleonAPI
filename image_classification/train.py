@@ -163,7 +163,6 @@ def main():
             all_classes_count[wl_mapping.iloc[i]['wl']] = 0
         whitelist_mapping[wl_mapping.iloc[i]['wl']].append(wl_mapping.iloc[i]['class_name'])
     mapping_dict = whitelist_mapping    
-    print(mapping_dict)
 
     class_list = list(state['idx_to_class'].values())
     class_list = [i.replace("'", "").replace("\"", "") for i in class_list]
@@ -190,7 +189,6 @@ def main():
                 param.requires_grad = False
 
 
-    print('done\n')
     all_size = len(pd.read_csv(args.data))
     val_size =  int(all_size * 0.1)
     mid_to_human_class_file = pd.read_csv("oidv6-class-descriptions.csv")
@@ -198,7 +196,6 @@ def main():
     for i in range(len(mid_to_human_class_file)):
         mid_to_human_class[mid_to_human_class_file.iloc[i][0]] = mid_to_human_class_file.iloc[i][1]
     stats = read_stats(args.data, whitelist_mapping, mid_to_human_class)
-    print("Running stats! !!!!!!", stats)
     whole_dataset = OpenImageW(args.root, args.data, args.wl_path,
                                 transforms.Compose([
                                     transforms.Resize((args.image_size, args.image_size)),
@@ -209,11 +206,9 @@ def main():
     
     device = torch.device('cuda', args.local_rank)
     model.to(device)
-    print("LOCAL RANK: ", args.local_rank)
     print(device)
 
 
-    print("len(train_dataset)): ", len(whole_dataset))
     set_seed(args.seed)
     # Pytorch Data loader
     train_loader = torch.utils.data.DataLoader(
