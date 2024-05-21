@@ -242,11 +242,9 @@ def define_whitelist(all_classes):
     return existing_classes
 
 def main():
-    print('ASL Example Inference code on a single image')
 
     # parsing args
     exact_labels = [args.label]
-    print(exact_labels)
 
     # mapping_dict = {'clothes': ['Dog clothes'], 'clothing': ['Baby & toddler clothing', 'Bicycle clothing', 'Bridal clothing', 'Clothing', 'Fur clothing', 'High-visibility clothing', 'Latex clothing', 'Motorcycle protective clothing', 'See-through clothing', 'Vintage clothing'], 'shirt': ['Active shirt', 'Dress shirt', 'Long-sleeved t-shirt', 'Polo shirt', 'Rugby shirt', 'Shirt', 'Sleeveless shirt', 'Sweatshirt', 'T-shirt', 'Undershirt'], 'pants': ['Active pants', 'Cargo pants', 'Hockey pants', 'Khaki pants', 'Pantsuit', 'Rain pants', 'Underpants'], 'jacket': ['Jacket', 'Leather jacket', 'Lifejacket'], 'footwear': ['Footwear'], 'shoe': ['Athletic shoe', 'Baby & toddler shoe', 'Ballet shoe', 'Basketball shoe', 'Bicycle shoe', 'Bowling shoe', 'Bridal shoe', 'Climbing shoe', 'Court shoe', 'Cross training shoe', 'Cycling shoe', 'Dancing shoe', 'Dress shoe', 'Hiking shoe', 'Outdoor shoe', 'Oxford shoe', 'Plimsoll shoe', 'Pointe shoe', 'Running shoe', 'Shoe organizer', 'Shoe store', 'Shoe', 'Skate shoe', 'Slip-on shoe', 'Snowshoe hare', 'Snowshoe', 'Tennis shoe', 'Walking shoe', 'Water shoe', 'Wrestling shoe'], 'paper': ['Art paper', 'Construction paper', 'Household paper product', 'Origami paper', 'Paper bag', 'Paper lantern', 'Paper product', 'Paper towel', 'Paper', 'Photographic paper', 'Rice paper', 'Tissue paper', 'Toilet paper', 'Wrapping paper'], 'glass': ['Beer glass', 'Glass bottle', 'Glass', 'Highball glass', 'Magnifying glass', 'Martini glass', 'Old fashioned glass', 'Pint glass', 'Shot glass', 'Stained glass', 'Wine glass'], 'carton': ['Carton'], 'cardboard': ['Cardboard'], 'tin': ['Tin can', 'Tin'], 'metal': ['Foil (Metal)', 'Metal', 'Metallophone', 'Metalsmith', 'Metalworking hand tool', 'Metalworking'], 'plastic': ['Plastic arts', 'Plastic bag', 'Plastic bottle', 'Plastic wrap', 'Plastic']}
 
@@ -267,8 +265,6 @@ def main():
                 sub_classes_list.append(value)
                 W_human.append(value)
     # Setup model
-    print(W)
-    print(W_human)
 
     args.num_classes = len(class_list)
     args.do_bottleneck_head = True
@@ -280,14 +276,11 @@ def main():
 
     model.cuda()
     model.eval()
-    print('done\n')
     wrong = 0
     wrong_relaxed = 0
     # doing inference
-    print('creating and loading the model... {}'.format(args.saved_model_path))
  
     human_verified_images = list(pd.read_csv("test-images-with-rotation.csv")["ImageID"])
-    print(type(human_verified_images))
     validation_data_mapping = {}
     validation_data_file = pd.read_csv(args.validation_data_file)
     validation_to_class_mapping = {}
@@ -341,9 +334,6 @@ def main():
 
 
         # print(validation_to_class_mapping[file_name])
-    print(len(validation_to_class_mapping))
-    print(count)
-    print("Threshold: ", args.th)
 
 
     for ckpt_name in sorted(os.listdir(args.ckpt_dir)):
