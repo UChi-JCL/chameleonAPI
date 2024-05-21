@@ -119,9 +119,6 @@ def main():
                 W.append(class_list.index(value))
                 W_human.append(value)
     # Setup model
-    print(W)
-    print(W_human)
-    print('creating model...')
 
 
     args.do_bottleneck_head = True
@@ -155,7 +152,6 @@ def main():
             all_classes_count[wl_mapping.iloc[i]['wl']] = 0
         whitelist_mapping[wl_mapping.iloc[i]['wl']].append(wl_mapping.iloc[i]['class_name'])
     mapping_dict = whitelist_mapping    
-    print('done\n')
     all_size = len(pd.read_csv(args.data))
     val_size =  int(all_size * 0.1)
     whole_dataset = OpenImageW(args.root, args.data,
@@ -192,11 +188,9 @@ def main():
     torch.cuda.manual_seed(args.seed)
     device = torch.device('cuda', args.local_rank)
     model.to(device)
-    print("LOCAL RANK: ", args.local_rank)
     print(device)
 
 
-    print("len(train_dataset)): ", len(whole_dataset))
 
     # Pytorch Data loader
     train_loader = torch.utils.data.DataLoader(
@@ -217,7 +211,6 @@ def train_multi_label_coco(args, model, train_loader, val_loader, lr, W, W_human
     Epochs = args.epochs
     Stop_epoch = args.stop_epoch
     weight_decay = 1e-4
-    print("TRAINING WITH CUSTOM LOSS FUNCTION")
     criterion = AsymmetricLossOrigNew(gamma_neg=args.gamma_neg, gamma_pos=args.gamma_pos, clip=0.05, disable_torch_grad_focal_loss=True)
 
     parameters = add_weight_decay(model, weight_decay)
@@ -276,10 +269,8 @@ def train_multi_label_coco(args, model, train_loader, val_loader, lr, W, W_human
             if i % 100 == 0 and args.rank == 0:
                 start_time = time.time()
                 trainInfoList.append([epoch, i, loss.item()])
-                print('Epoch [{}/{}], Step [{}/{}], LR {:.1e}'
-                      .format(epoch, Epochs, str(i).zfill(3), str(steps_per_epoch).zfill(3),
-                              scheduler.get_last_lr()[0], \
-                              loss.item()))
+                print('Epoch [{}/{}], Step [{}/{}]'
+                      .format(epoch, Epochs, str(i).zfill(3), str(steps_per_epoch).zfill(3)))
             if i % args.ckpt_step == 0 and args.local_rank == 0:
                 try:
                     torch.save(model.state_dict(), os.path.join(

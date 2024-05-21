@@ -41,5 +41,6 @@ for INDEX in smarth; do
     --model_path_openimages Open_ImagesV6_TRresNet_L_448.pth \
     --model_path  app_${INDEX}_default_base/model-3-1.ckpt  data/${INDEX}.csv
 
-done
+    echo "Training is done."
 
+done
